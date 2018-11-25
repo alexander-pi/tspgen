@@ -10,19 +10,13 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.JLabel;
 import javax.swing.ButtonGroup;
 import javax.swing.JButton;
-import javax.swing.JSeparator;
 import javax.swing.JRadioButton;
-import javax.swing.SwingConstants;
-import javax.swing.BoxLayout;
 import java.awt.Dimension;
 import javax.swing.SpringLayout;
-import java.awt.GridBagLayout;
-import java.awt.FlowLayout;
-import net.miginfocom.swing.MigLayout;
 import javax.swing.JTextArea;
 
 public class MainFrame {
-	public static final int WIDTH = 600, HEIGHT=400;
+	public static final int WIDTH = 1000, HEIGHT=600;
 	private JFrame frame;
 	private final JSpinner numNodesSpinner = new JSpinner();
 	private boolean genetics=true;
@@ -63,7 +57,7 @@ public class MainFrame {
 		DisplayPanel myPanel = new DisplayPanel();
 		springLayout.putConstraint(SpringLayout.NORTH, myPanel, 0, SpringLayout.NORTH, frame.getContentPane());
 		springLayout.putConstraint(SpringLayout.WEST, myPanel, 194, SpringLayout.WEST, frame.getContentPane());
-		springLayout.putConstraint(SpringLayout.SOUTH, myPanel, 425, SpringLayout.NORTH, frame.getContentPane());
+		springLayout.putConstraint(SpringLayout.SOUTH, myPanel, 671, SpringLayout.NORTH, frame.getContentPane());
 		springLayout.putConstraint(SpringLayout.EAST, myPanel, 1093, SpringLayout.WEST, frame.getContentPane());
 		frame.getContentPane().add(myPanel);
 		myPanel.setLayout(new BorderLayout(0, 0));
@@ -183,7 +177,7 @@ public class MainFrame {
 		
 		JTextArea output = new JTextArea();
 		sl_panel.putConstraint(SpringLayout.WEST, output, 10, SpringLayout.WEST, panel);
-		sl_panel.putConstraint(SpringLayout.SOUTH, output, -218, SpringLayout.SOUTH, panel);
+		sl_panel.putConstraint(SpringLayout.SOUTH, output, -10, SpringLayout.SOUTH, panel);
 		sl_panel.putConstraint(SpringLayout.EAST, output, 0, SpringLayout.EAST, startAlgorithmButton);
 		panel.add(output);
 		

@@ -12,7 +12,6 @@ import java.util.Collections;
 import java.util.Random;
 
 import javax.swing.JButton;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
@@ -20,11 +19,13 @@ import javax.swing.Timer;
 
 
 public class DisplayPanel extends JPanel {
-	private int  nodeD=6,numNodes,currentGen=0,maxGen=50,popSize=100,eliteSize=20, bestGenSol;
-	private float bestDistance=Float.MAX_VALUE,lastBestSolTime,currentBestDistance;
-	private double mutationRatio=0.0d;
+	private int  nodeD=6,numNodes,currentGen=0,maxGen=50,popSize=100,
+			eliteSize=20, bestGenSol;
+	private float bestDistance=Float.MAX_VALUE;
+	private double mutationRatio=0.0d,lastBestSolTime,currentBestDistance;
 	private Path bestPath, currentBestPath;
 	private int lexOrder[];
+	private long solNum, currentSol;
 	private Random random;
 	private Node nodes[];
 	private ArrayList<Path> population;
@@ -63,6 +64,8 @@ public class DisplayPanel extends JPanel {
 			currentGen=0;
 		}else {
 			lexOrder = new int[nodes.length];
+			solNum = factorial(nodes.length-1)/2;
+			currentSol=1;
 			for(int i=0;i<nodes.length;i++)
 				lexOrder[i]=i;
 			bestPath = new Path(lexOrder);
@@ -102,14 +105,14 @@ public class DisplayPanel extends JPanel {
     	float elapsedTime=(float)(System.currentTimeMillis()-startTime)/1000f;
     	
     	outputLines.set(0,"Best distance: "+String.format("%.02f", bestDistance)+",");
-    	outputLines.set(1,"found in: "+lastBestSolTime+" s"+(genetics?",":""));
+    	outputLines.set(1,"found in: "+String.format("%.03f", lastBestSolTime)+" s"+(genetics?",":""));
     	
     	if(genetics) {
     		outputLines.set(2, "in "+bestGenSol+"th generation");
     		outputLines.set(3, currentGen+"th generation");
     	}
     	
-    	outputLines.set(genetics?4:2,"Execution time: "+String.format("%.02f", elapsedTime)+" s");
+    	outputLines.set(genetics?4:2,"Execution time: "+String.format("%.03f", elapsedTime)+" s");
     	outputLabel.setText(getOutputText());
     }
     private String getOutputText() {
@@ -150,28 +153,16 @@ public class DisplayPanel extends JPanel {
 
     private void updateNextSolution() {
     	int largestI = -1;
-    	if(lexOrder[0]>lexOrder[lexOrder.length-1]) {
-      		triggerButton.setText("Start algorithm");
-      		runningAlgorithm=false;
-      		freezeResults = true;
-      		return;
-    	}
-    	  for (int i = 0; i < lexOrder.length - 1; i++) {
+    	  for (int i = 1; i < lexOrder.length - 1; i++) {
     	    if (lexOrder[i] < lexOrder[i + 1]) {
     	      largestI = i;
     	    }
     	  }
-    	  if (largestI == -1) {
-    	    //noLoop();
-      		triggerButton.setText("Start algorithm");
-      		runningAlgorithm=false;
-      		freezeResults = true;
-      		return;
-    	  }
+
 
     	  // STEP 2
     	  int largestJ = -1;
-    	  for (int j = 0; j < lexOrder.length; j++) {
+    	  for (int j = 1; j < lexOrder.length; j++) {
     	    if (lexOrder[largestI] < lexOrder[j]) {
     	      largestJ = j;
     	    }
@@ -190,13 +181,24 @@ public class DisplayPanel extends JPanel {
     	  }
     	  System.arraycopy( endArray, 0, lexOrder, lexOrder.length-endArray.length, endArray.length );
     	  
+    	  if(lexOrder[1]>lexOrder[lexOrder.length-1])
+    		  return;
     	  Path newPath = new Path(lexOrder);
     	  if(newPath.distance<bestDistance) {
   			bestDistance = newPath.distance;
   			bestPath = newPath;
   			lastBestSolTime = (System.currentTimeMillis()-startTime)/1000f;
+  			System.out.println("1&"+String.format("%.02f",lastBestSolTime).replace(",", ".")+" s&"
+  			+String.format("%.02f",bestDistance).replace(",", ".")+"\\\\");
+  			System.out.println("\\hline");
     	  }
     	  currentBestPath=newPath;
+    	  currentSol++;
+    	  if(currentSol>=solNum) {
+    		  triggerButton.setText("Start algorithm");
+          	  runningAlgorithm=false;
+          	  freezeResults = true;
+    	  }
 	}
     private void swap(int a[],int i,int j) {
     	  int temp = a[i];
@@ -242,6 +244,35 @@ public class DisplayPanel extends JPanel {
     		freezeResults = true;
     	}
     	}
+    
+    private float calcFitness(ArrayList<Path> currentGeneration) {
+    	float fitness_sum=0,currentWorstDistance=0;
+    	currentBestDistance = Float.MAX_VALUE;
+    	for(Path path:currentGeneration){
+    		if(path.distance < bestDistance){
+    			bestDistance = path.distance;
+    			bestPath = new Path(path.route);
+    			lastBestSolTime = (System.currentTimeMillis()-startTime)/1000f;
+    			bestGenSol = currentGen;
+      			System.out.println("1&"+String.format("%.02f",lastBestSolTime).replace(",", ".")+" s&"
+      			+String.format("%.02f",bestDistance).replace(",", ".")+"\\\\");
+      			System.out.println("\\hline");
+    			}
+
+    		if(path.distance < currentBestDistance){
+    			currentBestDistance = path.distance;
+    			currentBestPath = new Path(path.route);
+    			}
+    		if(path.distance>currentWorstDistance){
+    			currentWorstDistance=path.distance;
+    			}
+    		}
+    	for(Path path:currentGeneration){
+    		float fitness =currentWorstDistance-path.distance;
+    		path.fitness=fitness;
+    		fitness_sum+=fitness;}
+    	return fitness_sum;
+    }
     
     private ArrayList<Path> nextGeneration(ArrayList<Path> currentGeneration,ArrayList<Integer> bestIndexes){
     	ArrayList<Path> children = new ArrayList<Path>();
@@ -311,33 +342,7 @@ public class DisplayPanel extends JPanel {
         return new Path(child);
     }
 
-    
-    private float calcFitness(ArrayList<Path> currentGeneration) {
-    	float fitness_sum=0,currentWorstDistance=0;
-    	currentBestDistance = Float.MAX_VALUE;
-    	for(Path path:currentGeneration){
-    		if(path.distance < bestDistance){
-    			bestDistance = path.distance;
-    			bestPath = new Path(path.route);
-    			lastBestSolTime = (System.currentTimeMillis()-startTime)/1000f;
-    			bestGenSol = currentGen;
-    			}
 
-    		if(path.distance < currentBestDistance){
-    			currentBestDistance = path.distance;
-    			currentBestPath = new Path(path.route);
-    			}
-    		if(path.distance>currentWorstDistance){
-    			currentWorstDistance=path.distance;
-    			}
-    		}
-    	for(Path path:currentGeneration){
-    		float fitness =currentWorstDistance-path.distance;
-    		path.fitness=fitness;
-    		fitness_sum+=fitness;}
-    	return fitness_sum;
-    }
-    
     public ArrayList<Integer> getBestIndexes(ArrayList<Path> currentGeneration,float totalFitness){
     	float cum_sum[] = new float[currentGeneration.size()];
     	ArrayList<Integer> bestIndexes= new ArrayList<Integer>();
@@ -397,4 +402,11 @@ public class DisplayPanel extends JPanel {
 		}
 
 	}
+
+	private static int factorial(int n){    
+		  if (n == 0)    
+		    return 1;    
+		  else    
+		    return(n * factorial(n-1));    
+		 }    
 }
